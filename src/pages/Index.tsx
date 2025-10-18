@@ -8,6 +8,7 @@ import { MapView } from "@/components/MapView";
 import { UserPreferences, Restaurant } from "@/types";
 import { mockRestaurants, foodTags } from "@/data/mockRestaurants";
 import heroImage from "@/assets/hero-food.jpg";
+import logo from "@/assets/logo.png";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
@@ -63,9 +64,7 @@ const Index = () => {
       <header className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-40 shadow-sm">
         <div className="container max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              Choose Eat
-            </h1>
+            <img src={logo} alt="Choose Eat" className="h-12 w-auto" />
             <div className="text-sm text-muted-foreground">
               Welcome, {preferences.name}
             </div>

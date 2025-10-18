@@ -114,7 +114,7 @@ export const SwipeInterface = ({ restaurants, onSwipe }: SwipeInterfaceProps) =>
         )}
       </div>
 
-      <div className="flex justify-center gap-6 mt-8">
+      <div className="flex justify-center gap-6 mt-6">
         <Button
           variant="swipe"
           size="icon"
