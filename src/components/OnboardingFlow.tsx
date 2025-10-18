@@ -37,7 +37,7 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
         {step === 1 && (
           <div className="space-y-6">
             <div className="text-center space-y-4">
-              <img src={logo} alt="Choose Eat" className="h-24 w-auto mx-auto" />
+              <img src={logo} alt="Choose Eat" className="h-40 w-auto mx-auto" />
               <p className="text-lg text-muted-foreground">Find your next bite</p>
             </div>
 
