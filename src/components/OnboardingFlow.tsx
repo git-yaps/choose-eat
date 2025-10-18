@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { UserPreferences } from "@/types";
 import { foodTags } from "@/data/mockRestaurants";
 import { MapPin, ChevronRight } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 interface OnboardingFlowProps {
   onComplete: (preferences: UserPreferences) => void;
@@ -35,10 +36,8 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
       <div className="w-full max-w-md space-y-8 animate-scale-in">
         {step === 1 && (
           <div className="space-y-6">
-            <div className="text-center space-y-2">
-              <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                Choose Eat
-              </h1>
+            <div className="text-center space-y-4">
+              <img src={logo} alt="Choose Eat" className="h-24 w-auto mx-auto" />
               <p className="text-lg text-muted-foreground">Find your next bite</p>
             </div>
 
