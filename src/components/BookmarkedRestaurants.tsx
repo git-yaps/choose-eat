@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Restaurant } from "@/types";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, DollarSign, Trash2 } from "lucide-react";
+import { Star, MapPin, DollarSign, Trash2, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ReviewsDialog } from "@/components/ReviewsDialog";
 
 interface BookmarkedRestaurantsProps {
   restaurants: Restaurant[];
@@ -13,6 +15,8 @@ export const BookmarkedRestaurants = ({
   restaurants,
   onRemove,
 }: BookmarkedRestaurantsProps) => {
+  const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
+
   if (restaurants.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-96 text-center">
@@ -69,18 +73,36 @@ export const BookmarkedRestaurants = ({
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-1">
-                  {restaurant.tags.slice(0, 3).map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap gap-1 flex-1">
+                    {restaurant.tags.slice(0, 3).map((tag) => (
+                      <Badge key={tag} variant="secondary" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedRestaurant(restaurant)}
+                  >
+                    <MessageSquare className="w-4 h-4 mr-1" />
+                    Review
+                  </Button>
                 </div>
               </div>
             </div>
           </Card>
         ))}
       </div>
+
+      {selectedRestaurant && (
+        <ReviewsDialog
+          restaurant={selectedRestaurant}
+          open={!!selectedRestaurant}
+          onOpenChange={(open) => !open && setSelectedRestaurant(null)}
+        />
+      )}
     </div>
   );
 };

@@ -4,9 +4,11 @@ import { SwipeInterface } from "@/components/SwipeInterface";
 import { BookmarkedRestaurants } from "@/components/BookmarkedRestaurants";
 import { Navigation } from "@/components/Navigation";
 import { FilterBar } from "@/components/FilterBar";
+import { MapView } from "@/components/MapView";
 import { UserPreferences, Restaurant } from "@/types";
 import { mockRestaurants, foodTags } from "@/data/mockRestaurants";
 import heroImage from "@/assets/hero-food.jpg";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
@@ -111,13 +113,7 @@ const Index = () => {
         )}
 
         {activeTab === "map" && (
-          <div className="flex flex-col items-center justify-center h-96 text-center space-y-4">
-            <div className="text-6xl">🗺️</div>
-            <h3 className="text-2xl font-bold">Map View Coming Soon</h3>
-            <p className="text-muted-foreground">
-              We're working on an interactive map to help you explore nearby restaurants
-            </p>
-          </div>
+          <MapView restaurants={filteredRestaurants} userLocation={preferences.location} />
         )}
 
         {activeTab === "profile" && (
@@ -161,6 +157,16 @@ const Index = () => {
                       <p className="text-sm text-muted-foreground">Restaurants to Explore</p>
                     </div>
                   </div>
+                </div>
+
+                <div className="pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => window.location.href = '/admin'}
+                  >
+                    Admin Dashboard
+                  </Button>
                 </div>
               </div>
             </div>
