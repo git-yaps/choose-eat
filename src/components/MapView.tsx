@@ -129,7 +129,7 @@ export const MapView = ({ restaurants, userLocation }: MapViewProps) => {
       {/* Interactive Map */}
       <div 
         ref={mapContainer} 
-        className="h-96 bg-muted rounded-2xl overflow-hidden border-2 border-border"
+        className="h-[500px] w-full bg-muted rounded-2xl overflow-hidden border-2 border-border"
         style={{ display: isMapLoaded ? 'block' : 'none' }}
       />
 
