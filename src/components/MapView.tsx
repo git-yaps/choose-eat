@@ -37,6 +37,16 @@ export const MapView = ({ restaurants, userLocation }: MapViewProps) => {
 
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
+    // Ensure map fits its container
+    map.current.on('load', () => {
+      map.current?.resize();
+    });
+    // Extra safety resize shortly after init
+    setTimeout(() => map.current?.resize(), 100);
+
+    const handleResize = () => map.current?.resize();
+    window.addEventListener('resize', handleResize);
+
     // Add markers for each restaurant
     restaurants.forEach((restaurant, index) => {
       const el = document.createElement('div');
@@ -75,6 +85,7 @@ export const MapView = ({ restaurants, userLocation }: MapViewProps) => {
     setIsMapLoaded(true);
 
     return () => {
+      window.removeEventListener('resize', handleResize);
       map.current?.remove();
       map.current = null;
     };
@@ -95,7 +106,6 @@ export const MapView = ({ restaurants, userLocation }: MapViewProps) => {
         </div>
       </div>
 
-      {/* Mapbox Token Input */}
       {!isMapLoaded && (
         <Card className="p-4 space-y-3">
           <div className="space-y-2">
@@ -130,7 +140,7 @@ export const MapView = ({ restaurants, userLocation }: MapViewProps) => {
       <div 
         ref={mapContainer} 
         className="h-[500px] w-full bg-muted rounded-2xl overflow-hidden border-2 border-border"
-        style={{ display: isMapLoaded ? 'block' : 'none' }}
+        id="mapbox-container"
       />
 
       {/* Restaurant List */}
