@@ -3,6 +3,10 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Star, Navigation } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useEffect, useRef, useState } from "react";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
 
 interface MapViewProps {
   restaurants: Restaurant[];
@@ -10,6 +14,72 @@ interface MapViewProps {
 }
 
 export const MapView = ({ restaurants, userLocation }: MapViewProps) => {
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const [mapboxToken, setMapboxToken] = useState("");
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!mapContainer.current || !mapboxToken || map.current) return;
+
+    mapboxgl.accessToken = mapboxToken;
+    
+    // Calculate center point from restaurants
+    const avgLat = restaurants.reduce((sum, r) => sum + r.latitude, 0) / restaurants.length;
+    const avgLng = restaurants.reduce((sum, r) => sum + r.longitude, 0) / restaurants.length;
+
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [avgLng, avgLat],
+      zoom: 13,
+    });
+
+    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    // Add markers for each restaurant
+    restaurants.forEach((restaurant, index) => {
+      const el = document.createElement('div');
+      el.className = 'marker';
+      el.style.backgroundImage = 'url(https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png)';
+      el.style.width = '40px';
+      el.style.height = '40px';
+      el.style.backgroundSize = 'contain';
+      el.style.cursor = 'pointer';
+
+      const numberEl = document.createElement('div');
+      numberEl.textContent = `${index + 1}`;
+      numberEl.style.position = 'absolute';
+      numberEl.style.top = '8px';
+      numberEl.style.left = '50%';
+      numberEl.style.transform = 'translateX(-50%)';
+      numberEl.style.color = 'white';
+      numberEl.style.fontWeight = 'bold';
+      numberEl.style.fontSize = '12px';
+      el.appendChild(numberEl);
+
+      new mapboxgl.Marker(el)
+        .setLngLat([restaurant.longitude, restaurant.latitude])
+        .setPopup(
+          new mapboxgl.Popup({ offset: 25 }).setHTML(
+            `<div style="padding: 8px;">
+              <h3 style="font-weight: bold; margin-bottom: 4px;">${restaurant.name}</h3>
+              <p style="color: #666; font-size: 14px; margin-bottom: 4px;">${restaurant.cuisine}</p>
+              <p style="font-size: 12px;">⭐ ${restaurant.rating} • ${restaurant.priceRange}</p>
+            </div>`
+          )
+        )
+        .addTo(map.current!);
+    });
+
+    setIsMapLoaded(true);
+
+    return () => {
+      map.current?.remove();
+      map.current = null;
+    };
+  }, [restaurants, mapboxToken]);
+
   const handleGetDirections = (restaurant: Restaurant) => {
     const query = encodeURIComponent(restaurant.address);
     window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
@@ -25,34 +95,43 @@ export const MapView = ({ restaurants, userLocation }: MapViewProps) => {
         </div>
       </div>
 
-      {/* Map Placeholder */}
-      <div className="relative h-64 bg-muted rounded-2xl overflow-hidden border-2 border-border">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
-          <div className="text-center space-y-2">
-            <MapPin className="w-12 h-12 mx-auto text-primary" />
-            <p className="text-sm text-muted-foreground">Interactive map coming soon</p>
-          </div>
-        </div>
-        
-        {/* Map Markers Preview */}
-        {restaurants.slice(0, 3).map((restaurant, index) => (
-          <div
-            key={restaurant.id}
-            className="absolute"
-            style={{
-              left: `${30 + index * 20}%`,
-              top: `${40 + index * 10}%`,
-            }}
-          >
-            <div className="relative">
-              <MapPin className="w-8 h-8 text-primary fill-primary animate-bounce" />
-              <span className="absolute -top-1 -right-1 bg-secondary text-secondary-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
-                {index + 1}
-              </span>
+      {/* Mapbox Token Input */}
+      {!isMapLoaded && (
+        <Card className="p-4 space-y-3">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Enter your Mapbox Public Token</label>
+            <p className="text-xs text-muted-foreground">
+              Get your free token at{" "}
+              <a 
+                href="https://account.mapbox.com/access-tokens/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                mapbox.com
+              </a>
+            </p>
+            <div className="flex gap-2">
+              <Input
+                type="text"
+                placeholder="pk.eyJ1..."
+                value={mapboxToken}
+                onChange={(e) => setMapboxToken(e.target.value)}
+              />
+              <Button onClick={() => setMapboxToken(mapboxToken)} disabled={!mapboxToken}>
+                Load Map
+              </Button>
             </div>
           </div>
-        ))}
-      </div>
+        </Card>
+      )}
+
+      {/* Interactive Map */}
+      <div 
+        ref={mapContainer} 
+        className="h-96 bg-muted rounded-2xl overflow-hidden border-2 border-border"
+        style={{ display: isMapLoaded ? 'block' : 'none' }}
+      />
 
       {/* Restaurant List */}
       <div className="grid gap-4">
