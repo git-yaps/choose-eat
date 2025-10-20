@@ -15,11 +15,15 @@ export const RestaurantCard = ({ restaurant, style }: RestaurantCardProps) => {
       className="absolute w-full max-w-sm bg-card rounded-2xl overflow-hidden shadow-float cursor-grab active:cursor-grabbing"
       style={style}
     >
-      <div className="relative h-80 overflow-hidden">
+      <div className="relative h-80 w-full overflow-hidden bg-muted">
         <img
           src={restaurant.image}
           alt={restaurant.name}
-          className="w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover"
+          loading="eager"
+          onError={(e) => {
+            e.currentTarget.src = 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&h=600&fit=crop';
+          }}
         />
         <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-card" />
         
