@@ -3,8 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Star, Navigation } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
@@ -16,13 +15,12 @@ interface MapViewProps {
 export const MapView = ({ restaurants, userLocation }: MapViewProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const [mapboxToken, setMapboxToken] = useState("");
-  const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const MAPBOX_TOKEN = "pk.eyJ1IjoieWFwc3BhY2UiLCJhIjoiY205bzJvNTNoMG9qZDJqcHhxcHhwa3N2dyJ9.DXTcJDikewJBcYjsUPZc7Q";
 
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken || map.current) return;
+    if (!mapContainer.current || map.current) return;
 
-    mapboxgl.accessToken = mapboxToken;
+    mapboxgl.accessToken = MAPBOX_TOKEN;
     
     // Calculate center point from restaurants
     const avgLat = restaurants.reduce((sum, r) => sum + r.latitude, 0) / restaurants.length;
@@ -82,14 +80,12 @@ export const MapView = ({ restaurants, userLocation }: MapViewProps) => {
         .addTo(map.current!);
     });
 
-    setIsMapLoaded(true);
-
     return () => {
       window.removeEventListener('resize', handleResize);
       map.current?.remove();
       map.current = null;
     };
-  }, [restaurants, mapboxToken]);
+  }, [restaurants]);
 
   const handleGetDirections = (restaurant: Restaurant) => {
     const query = encodeURIComponent(restaurant.address);
@@ -105,36 +101,6 @@ export const MapView = ({ restaurants, userLocation }: MapViewProps) => {
           <span>{userLocation}</span>
         </div>
       </div>
-
-      {!isMapLoaded && (
-        <Card className="p-4 space-y-3">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Enter your Mapbox Public Token</label>
-            <p className="text-xs text-muted-foreground">
-              Get your free token at{" "}
-              <a 
-                href="https://account.mapbox.com/access-tokens/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                mapbox.com
-              </a>
-            </p>
-            <div className="flex gap-2">
-              <Input
-                type="text"
-                placeholder="pk.eyJ1..."
-                value={mapboxToken}
-                onChange={(e) => setMapboxToken(e.target.value)}
-              />
-              <Button onClick={() => setMapboxToken(mapboxToken)} disabled={!mapboxToken}>
-                Load Map
-              </Button>
-            </div>
-          </div>
-        </Card>
-      )}
 
       {/* Interactive Map */}
       <div 
