@@ -18,6 +18,7 @@ const Index = () => {
   const [filteredRestaurants, setFilteredRestaurants] = useState(mockRestaurants);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedPriceRanges, setSelectedPriceRanges] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (preferences) {
@@ -27,6 +28,17 @@ const Index = () => {
 
   useEffect(() => {
     let filtered = mockRestaurants;
+    
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim().slice(0, 100);
+      filtered = filtered.filter((restaurant) =>
+        restaurant.name.toLowerCase().includes(query) ||
+        restaurant.cuisine.toLowerCase().includes(query) ||
+        restaurant.description.toLowerCase().includes(query) ||
+        restaurant.tags.some(tag => tag.toLowerCase().includes(query))
+      );
+    }
     
     // Filter by tags
     if (selectedTags.length > 0) {
@@ -43,7 +55,7 @@ const Index = () => {
     }
     
     setFilteredRestaurants(filtered);
-  }, [selectedTags, selectedPriceRanges]);
+  }, [selectedTags, selectedPriceRanges, searchQuery]);
 
   const handleSwipe = (restaurantId: string, direction: "left" | "right") => {
     if (direction === "right") {
@@ -113,6 +125,8 @@ const Index = () => {
               availableTags={foodTags}
               selectedPriceRanges={selectedPriceRanges}
               onPriceRangeToggle={handlePriceRangeToggle}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
             />
 
             <SwipeInterface

@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { SlidersHorizontal, DollarSign } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { SlidersHorizontal, DollarSign, Search } from "lucide-react";
 
 interface FilterBarProps {
   selectedTags: string[];
@@ -8,11 +9,13 @@ interface FilterBarProps {
   availableTags: string[];
   selectedPriceRanges: string[];
   onPriceRangeToggle: (priceRange: string) => void;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
 }
 
 const priceRanges = ["$", "$$", "$$$", "$$$$"];
 
-export const FilterBar = ({ selectedTags, onTagToggle, availableTags, selectedPriceRanges, onPriceRangeToggle }: FilterBarProps) => {
+export const FilterBar = ({ selectedTags, onTagToggle, availableTags, selectedPriceRanges, onPriceRangeToggle, searchQuery, onSearchChange }: FilterBarProps) => {
   return (
     <div className="bg-card rounded-2xl p-4 shadow-card space-y-4">
       <div className="flex items-center gap-3">
@@ -20,7 +23,19 @@ export const FilterBar = ({ selectedTags, onTagToggle, availableTags, selectedPr
         <h3 className="font-semibold">Filters</h3>
       </div>
       
-      <div className="space-y-3">
+      <div className="space-y-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search restaurants, cuisine, or tags..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            maxLength={100}
+            className="pl-10"
+          />
+        </div>
+
         <div>
           <div className="flex items-center gap-2 mb-2">
             <DollarSign className="w-4 h-4 text-muted-foreground" />
