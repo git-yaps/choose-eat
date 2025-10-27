@@ -5,6 +5,8 @@ export interface Restaurant {
   image: string;
   rating: number;
   priceRange: "$" | "$$" | "$$$" | "$$$$";
+  priceMin: number;
+  priceMax: number;
   distance: number;
   tags: string[];
   description: string;

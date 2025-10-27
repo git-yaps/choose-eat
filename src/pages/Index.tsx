@@ -17,7 +17,7 @@ const Index = () => {
   const [bookmarked, setBookmarked] = useState<Restaurant[]>([]);
   const [filteredRestaurants, setFilteredRestaurants] = useState(mockRestaurants);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [selectedPriceRanges, setSelectedPriceRanges] = useState<string[]>([]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([50, 2000]);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -48,14 +48,12 @@ const Index = () => {
     }
     
     // Filter by price range
-    if (selectedPriceRanges.length > 0) {
-      filtered = filtered.filter((restaurant) =>
-        selectedPriceRanges.includes(restaurant.priceRange)
-      );
-    }
+    filtered = filtered.filter((restaurant) =>
+      restaurant.priceMin <= priceRange[1] && restaurant.priceMax >= priceRange[0]
+    );
     
     setFilteredRestaurants(filtered);
-  }, [selectedTags, selectedPriceRanges, searchQuery]);
+  }, [selectedTags, priceRange, searchQuery]);
 
   const handleSwipe = (restaurantId: string, direction: "left" | "right") => {
     if (direction === "right") {
@@ -76,10 +74,8 @@ const Index = () => {
     );
   };
 
-  const handlePriceRangeToggle = (priceRange: string) => {
-    setSelectedPriceRanges((prev) =>
-      prev.includes(priceRange) ? prev.filter((p) => p !== priceRange) : [...prev, priceRange]
-    );
+  const handlePriceRangeChange = (range: [number, number]) => {
+    setPriceRange(range);
   };
 
   if (!preferences) {
@@ -123,8 +119,8 @@ const Index = () => {
               selectedTags={selectedTags}
               onTagToggle={handleTagToggle}
               availableTags={foodTags}
-              selectedPriceRanges={selectedPriceRanges}
-              onPriceRangeToggle={handlePriceRangeToggle}
+              priceRange={priceRange}
+              onPriceRangeChange={handlePriceRangeChange}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
             />

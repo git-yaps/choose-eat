@@ -1,21 +1,19 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SlidersHorizontal, DollarSign, Search } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { SlidersHorizontal, Search } from "lucide-react";
 
 interface FilterBarProps {
   selectedTags: string[];
   onTagToggle: (tag: string) => void;
   availableTags: string[];
-  selectedPriceRanges: string[];
-  onPriceRangeToggle: (priceRange: string) => void;
+  priceRange: [number, number];
+  onPriceRangeChange: (range: [number, number]) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
 }
 
-const priceRanges = ["$", "$$", "$$$", "$$$$"];
-
-export const FilterBar = ({ selectedTags, onTagToggle, availableTags, selectedPriceRanges, onPriceRangeToggle, searchQuery, onSearchChange }: FilterBarProps) => {
+export const FilterBar = ({ selectedTags, onTagToggle, availableTags, priceRange, onPriceRangeChange, searchQuery, onSearchChange }: FilterBarProps) => {
   return (
     <div className="bg-card rounded-2xl p-4 shadow-card space-y-4">
       <div className="flex items-center gap-3">
@@ -37,24 +35,20 @@ export const FilterBar = ({ selectedTags, onTagToggle, availableTags, selectedPr
         </div>
 
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <DollarSign className="w-4 h-4 text-muted-foreground" />
+          <div className="flex items-center justify-between mb-3">
             <label className="text-sm font-medium">Price Range</label>
+            <span className="text-sm text-muted-foreground">
+              ₱{priceRange[0]} - ₱{priceRange[1]}
+            </span>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {priceRanges.map((price) => (
-              <Badge
-                key={price}
-                variant={selectedPriceRanges.includes(price) ? "default" : "outline"}
-                className={`cursor-pointer py-1.5 px-3 text-xs transition-all hover:scale-105 ${
-                  selectedPriceRanges.includes(price) ? "bg-gradient-primary border-0" : ""
-                }`}
-                onClick={() => onPriceRangeToggle(price)}
-              >
-                {price}
-              </Badge>
-            ))}
-          </div>
+          <Slider
+            min={50}
+            max={2000}
+            step={50}
+            value={priceRange}
+            onValueChange={(value) => onPriceRangeChange(value as [number, number])}
+            className="w-full"
+          />
         </div>
 
         <div>

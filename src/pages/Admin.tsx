@@ -56,6 +56,8 @@ const Admin = () => {
       description: formData.description,
       address: formData.address,
       priceRange: formData.priceRange,
+      priceMin: formData.priceRange === "$" ? 50 : formData.priceRange === "$$" ? 200 : formData.priceRange === "$$$" ? 500 : 1000,
+      priceMax: formData.priceRange === "$" ? 200 : formData.priceRange === "$$" ? 500 : formData.priceRange === "$$$" ? 1200 : 2000,
       distance: formData.distance,
       rating: formData.rating,
       tags: formData.selectedTags,

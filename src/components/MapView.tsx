@@ -3,7 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Star, Navigation } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect, useRef } from "react";
+import { Input } from "@/components/ui/input";
+import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
@@ -15,6 +16,7 @@ interface MapViewProps {
 export const MapView = ({ restaurants, userLocation }: MapViewProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+  const [location, setLocation] = useState(userLocation);
   const MAPBOX_TOKEN = "pk.eyJ1IjoieWFwc3BhY2UiLCJhIjoiY205bzJvNTNoMG9qZDJqcHhxcHhwa3N2dyJ9.DXTcJDikewJBcYjsUPZc7Q";
 
   useEffect(() => {
@@ -46,34 +48,35 @@ export const MapView = ({ restaurants, userLocation }: MapViewProps) => {
     window.addEventListener('resize', handleResize);
 
     // Add markers for each restaurant
-    restaurants.forEach((restaurant, index) => {
+    restaurants.forEach((restaurant) => {
       const el = document.createElement('div');
       el.className = 'marker';
-      el.style.backgroundImage = 'url(https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png)';
-      el.style.width = '40px';
-      el.style.height = '40px';
-      el.style.backgroundSize = 'contain';
+      el.style.width = '32px';
+      el.style.height = '32px';
+      el.style.borderRadius = '50%';
+      el.style.backgroundColor = '#C2410C';
+      el.style.border = '3px solid white';
+      el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
       el.style.cursor = 'pointer';
-
-      const numberEl = document.createElement('div');
-      numberEl.textContent = `${index + 1}`;
-      numberEl.style.position = 'absolute';
-      numberEl.style.top = '8px';
-      numberEl.style.left = '50%';
-      numberEl.style.transform = 'translateX(-50%)';
-      numberEl.style.color = 'white';
-      numberEl.style.fontWeight = 'bold';
-      numberEl.style.fontSize = '12px';
-      el.appendChild(numberEl);
+      el.style.transition = 'transform 0.2s';
+      
+      el.addEventListener('mouseenter', () => {
+        el.style.transform = 'scale(1.2)';
+      });
+      
+      el.addEventListener('mouseleave', () => {
+        el.style.transform = 'scale(1)';
+      });
 
       new mapboxgl.Marker(el)
         .setLngLat([restaurant.longitude, restaurant.latitude])
         .setPopup(
           new mapboxgl.Popup({ offset: 25 }).setHTML(
-            `<div style="padding: 8px;">
-              <h3 style="font-weight: bold; margin-bottom: 4px;">${restaurant.name}</h3>
-              <p style="color: #666; font-size: 14px; margin-bottom: 4px;">${restaurant.cuisine}</p>
-              <p style="font-size: 12px;">⭐ ${restaurant.rating} • ${restaurant.priceRange}</p>
+            `<div style="padding: 12px; font-family: 'DM Sans', sans-serif;">
+              <h3 style="font-weight: 700; margin-bottom: 6px; font-size: 16px;">${restaurant.name}</h3>
+              <p style="color: #666; font-size: 14px; margin-bottom: 6px;">${restaurant.cuisine}</p>
+              <p style="font-size: 13px; margin-bottom: 4px;">⭐ ${restaurant.rating} • ${restaurant.priceRange}</p>
+              <p style="color: #C2410C; font-weight: 600; font-size: 14px;">₱${restaurant.priceMin} - ₱${restaurant.priceMax}</p>
             </div>`
           )
         )
@@ -94,11 +97,17 @@ export const MapView = ({ restaurants, userLocation }: MapViewProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="space-y-3">
         <h2 className="text-2xl font-bold">Nearby Restaurants</h2>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <MapPin className="w-4 h-4" />
-          <span>{userLocation}</span>
+        <div className="flex items-center gap-3">
+          <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          <Input
+            type="text"
+            placeholder="Enter location..."
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            className="flex-1"
+          />
         </div>
       </div>
 
@@ -142,6 +151,10 @@ export const MapView = ({ restaurants, userLocation }: MapViewProps) => {
                   </div>
                   <Badge variant="secondary">{restaurant.priceRange}</Badge>
                 </div>
+
+                <p className="text-sm font-semibold text-primary">
+                  ₱{restaurant.priceMin} - ₱{restaurant.priceMax}
+                </p>
 
                 <Button
                   variant="outline"
