@@ -17,6 +17,7 @@ const Index = () => {
   const [bookmarked, setBookmarked] = useState<Restaurant[]>([]);
   const [filteredRestaurants, setFilteredRestaurants] = useState(mockRestaurants);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedPriceRanges, setSelectedPriceRanges] = useState<string[]>([]);
 
   useEffect(() => {
     if (preferences) {
@@ -25,15 +26,24 @@ const Index = () => {
   }, [preferences]);
 
   useEffect(() => {
-    if (selectedTags.length === 0) {
-      setFilteredRestaurants(mockRestaurants);
-    } else {
-      const filtered = mockRestaurants.filter((restaurant) =>
+    let filtered = mockRestaurants;
+    
+    // Filter by tags
+    if (selectedTags.length > 0) {
+      filtered = filtered.filter((restaurant) =>
         restaurant.tags.some((tag) => selectedTags.includes(tag))
       );
-      setFilteredRestaurants(filtered);
     }
-  }, [selectedTags]);
+    
+    // Filter by price range
+    if (selectedPriceRanges.length > 0) {
+      filtered = filtered.filter((restaurant) =>
+        selectedPriceRanges.includes(restaurant.priceRange)
+      );
+    }
+    
+    setFilteredRestaurants(filtered);
+  }, [selectedTags, selectedPriceRanges]);
 
   const handleSwipe = (restaurantId: string, direction: "left" | "right") => {
     if (direction === "right") {
@@ -51,6 +61,12 @@ const Index = () => {
   const handleTagToggle = (tag: string) => {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const handlePriceRangeToggle = (priceRange: string) => {
+    setSelectedPriceRanges((prev) =>
+      prev.includes(priceRange) ? prev.filter((p) => p !== priceRange) : [...prev, priceRange]
     );
   };
 
@@ -95,6 +111,8 @@ const Index = () => {
               selectedTags={selectedTags}
               onTagToggle={handleTagToggle}
               availableTags={foodTags}
+              selectedPriceRanges={selectedPriceRanges}
+              onPriceRangeToggle={handlePriceRangeToggle}
             />
 
             <SwipeInterface
