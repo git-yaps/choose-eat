@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Restaurant } from "@/types";
 import { RestaurantCard } from "./RestaurantCard";
-import { Button } from "@/components/ui/button";
-import { X, Heart, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface SwipeInterfaceProps {
@@ -35,23 +34,25 @@ export const SwipeInterface = ({ restaurants, onSwipe }: SwipeInterfaceProps) =>
     setDragOffset({ x: 0, y: 0 });
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
     setIsDragging(true);
     setDragStart({ x: e.clientX, y: e.clientY });
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handlePointerMove = (e: React.PointerEvent) => {
     if (!isDragging) return;
     const deltaX = e.clientX - dragStart.x;
     const deltaY = e.clientY - dragStart.y;
     setDragOffset({ x: deltaX, y: deltaY });
   };
 
-  const handleMouseUp = () => {
+  const handlePointerUp = () => {
     if (!isDragging) return;
     setIsDragging(false);
 
-    if (Math.abs(dragOffset.x) > 100) {
+    const swipeThreshold = 100;
+    if (Math.abs(dragOffset.x) > swipeThreshold) {
       handleSwipe(dragOffset.x > 0 ? "right" : "left");
     } else {
       setDragOffset({ x: 0, y: 0 });
@@ -60,8 +61,9 @@ export const SwipeInterface = ({ restaurants, onSwipe }: SwipeInterfaceProps) =>
 
   useEffect(() => {
     if (isDragging) {
-      document.addEventListener("mouseup", handleMouseUp as any);
-      return () => document.removeEventListener("mouseup", handleMouseUp as any);
+      const handleGlobalPointerUp = () => handlePointerUp();
+      document.addEventListener("pointerup", handleGlobalPointerUp);
+      return () => document.removeEventListener("pointerup", handleGlobalPointerUp);
     }
   }, [isDragging, dragOffset]);
 
@@ -83,8 +85,9 @@ export const SwipeInterface = ({ restaurants, onSwipe }: SwipeInterfaceProps) =>
   return (
     <div className="relative w-full max-w-sm mx-auto">
       <div
-        className="relative h-[600px]"
-        onMouseMove={handleMouseMove}
+        className="relative h-[600px] touch-none"
+        onPointerMove={handlePointerMove}
+        onPointerDown={handlePointerDown}
         ref={cardRef}
       >
         <RestaurantCard
@@ -97,40 +100,17 @@ export const SwipeInterface = ({ restaurants, onSwipe }: SwipeInterfaceProps) =>
           onSwipeLeft={() => handleSwipe("left")}
           onSwipeRight={() => handleSwipe("right")}
         />
-        <div
-          className="absolute inset-0 pointer-events-none"
-          onMouseDown={handleMouseDown}
-        />
 
         {dragOffset.x > 50 && (
-          <div className="absolute top-8 right-8 bg-primary text-primary-foreground px-6 py-3 rounded-full font-bold text-lg rotate-12 animate-scale-in">
+          <div className="absolute top-8 right-8 bg-primary text-primary-foreground px-6 py-3 rounded-full font-bold text-lg rotate-12 animate-scale-in pointer-events-none">
             LIKE
           </div>
         )}
         {dragOffset.x < -50 && (
-          <div className="absolute top-8 left-8 bg-destructive text-destructive-foreground px-6 py-3 rounded-full font-bold text-lg -rotate-12 animate-scale-in">
+          <div className="absolute top-8 left-8 bg-destructive text-destructive-foreground px-6 py-3 rounded-full font-bold text-lg -rotate-12 animate-scale-in pointer-events-none">
             NOPE
           </div>
         )}
-      </div>
-
-      <div className="flex justify-center gap-6 mt-6">
-        <Button
-          variant="swipe"
-          size="icon"
-          className="h-16 w-16 rounded-full"
-          onClick={() => handleSwipe("left")}
-        >
-          <X className="w-8 h-8 text-destructive" />
-        </Button>
-        <Button
-          variant="swipe"
-          size="icon"
-          className="h-16 w-16 rounded-full"
-          onClick={() => handleSwipe("right")}
-        >
-          <Heart className="w-8 h-8 text-primary" />
-        </Button>
       </div>
     </div>
   );
