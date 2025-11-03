@@ -5,7 +5,7 @@ import logo from "@/assets/logo.png";
 
 const Landing = () => {
   const handleGetStarted = () => {
-    window.location.href = "/app";
+    window.location.href = "/auth";
   };
 
   return (
