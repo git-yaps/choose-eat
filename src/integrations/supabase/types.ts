@@ -14,51 +14,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      profiles: {
-        Row: {
-          budget_max: number | null
-          budget_min: number | null
-          city_or_zip_code: string
-          created_at: string
-          dietary_preferences: string[] | null
-          dining_occasions: string[] | null
-          id: string
-          meal_categories: string[] | null
-          name: string
-          taste_profile: string[] | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          budget_max?: number | null
-          budget_min?: number | null
-          city_or_zip_code: string
-          created_at?: string
-          dietary_preferences?: string[] | null
-          dining_occasions?: string[] | null
-          id?: string
-          meal_categories?: string[] | null
-          name: string
-          taste_profile?: string[] | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          budget_max?: number | null
-          budget_min?: number | null
-          city_or_zip_code?: string
-          created_at?: string
-          dietary_preferences?: string[] | null
-          dining_occasions?: string[] | null
-          id?: string
-          meal_categories?: string[] | null
-          name?: string
-          taste_profile?: string[] | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
