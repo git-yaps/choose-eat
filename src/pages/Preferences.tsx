@@ -50,17 +50,30 @@ const Preferences = () => {
       return;
     }
 
-    // Check if preferences already exist
+    // Load existing preferences if they exist
     const { data: profile } = await (supabase as any)
       .from("profiles")
       .select("*")
       .eq("user_id", session.user.id)
       .single();
 
-    if (profile && profile.taste_profile) {
-      // If preferences already set, redirect to app
-      navigate("/app");
-      return;
+    if (profile) {
+      // Load existing preferences into the form
+      if (profile.taste_profile) {
+        setSelectedTastes(profile.taste_profile);
+      }
+      if (profile.dietary_preferences) {
+        setSelectedDietary(profile.dietary_preferences);
+      }
+      if (profile.meal_categories) {
+        setSelectedMeals(profile.meal_categories);
+      }
+      if (profile.dining_occasions) {
+        setSelectedOccasions(profile.dining_occasions);
+      }
+      if (profile.budget_min && profile.budget_max) {
+        setBudgetRange([profile.budget_min, profile.budget_max]);
+      }
     }
 
     setLoading(false);
