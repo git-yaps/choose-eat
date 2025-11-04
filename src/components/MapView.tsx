@@ -114,7 +114,7 @@ export const MapView = ({ restaurants, userLocation }: MapViewProps) => {
       {/* Interactive Map */}
       <div 
         ref={mapContainer} 
-        className="h-[500px] w-full bg-muted rounded-2xl overflow-hidden border-2 border-border"
+        className="h-[300px] w-full bg-muted rounded-2xl overflow-hidden border-2 border-border"
         id="mapbox-container"
       />
 

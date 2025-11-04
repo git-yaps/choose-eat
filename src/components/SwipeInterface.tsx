@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Restaurant } from "@/types";
 import { RestaurantCard } from "./RestaurantCard";
-import { Info } from "lucide-react";
+import { Info, Heart, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface SwipeInterfaceProps {
@@ -69,10 +69,10 @@ export const SwipeInterface = ({ restaurants, onSwipe }: SwipeInterfaceProps) =>
 
   if (!currentRestaurant) {
     return (
-      <div className="flex flex-col items-center justify-center h-[600px] text-center space-y-4">
-        <Info className="w-16 h-16 text-muted-foreground" />
-        <h3 className="text-2xl font-bold">No more restaurants!</h3>
-        <p className="text-muted-foreground">
+      <div className="flex flex-col items-center justify-center h-[500px] sm:h-[600px] text-center space-y-4 px-4">
+        <Info className="w-12 h-12 sm:w-16 sm:h-16 text-muted-foreground" />
+        <h3 className="text-xl sm:text-2xl font-bold">No more restaurants!</h3>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Check your bookmarks or adjust your filters
         </p>
       </div>
@@ -83,9 +83,9 @@ export const SwipeInterface = ({ restaurants, onSwipe }: SwipeInterfaceProps) =>
   const opacity = 1 - Math.abs(dragOffset.x) / 300;
 
   return (
-    <div className="relative w-full max-w-sm mx-auto">
+    <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto pb-0 px-4 sm:px-0">
       <div
-        className="relative h-[600px] touch-none"
+        className="relative h-[500px] sm:h-[550px] md:h-[600px] touch-none"
         onPointerMove={handlePointerMove}
         onPointerDown={handlePointerDown}
         ref={cardRef}
@@ -102,13 +102,13 @@ export const SwipeInterface = ({ restaurants, onSwipe }: SwipeInterfaceProps) =>
         />
 
         {dragOffset.x > 50 && (
-          <div className="absolute top-8 right-8 bg-primary text-primary-foreground px-6 py-3 rounded-full font-bold text-lg rotate-12 animate-scale-in pointer-events-none">
-            LIKE
+          <div className="absolute top-4 right-4 sm:top-8 sm:right-8 bg-primary text-primary-foreground p-3 sm:p-4 rounded-full rotate-12 animate-scale-in pointer-events-none shadow-lg">
+            <Heart className="w-6 h-6 sm:w-8 sm:h-8 fill-current" />
           </div>
         )}
         {dragOffset.x < -50 && (
-          <div className="absolute top-8 left-8 bg-destructive text-destructive-foreground px-6 py-3 rounded-full font-bold text-lg -rotate-12 animate-scale-in pointer-events-none">
-            NOPE
+          <div className="absolute top-4 left-4 sm:top-8 sm:left-8 bg-destructive text-destructive-foreground p-3 sm:p-4 rounded-full -rotate-12 animate-scale-in pointer-events-none shadow-lg">
+            <X className="w-6 h-6 sm:w-8 sm:h-8" />
           </div>
         )}
       </div>

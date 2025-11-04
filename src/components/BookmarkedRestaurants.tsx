@@ -30,53 +30,57 @@ export const BookmarkedRestaurants = ({
   }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Your Saved Restaurants</h2>
-      <div className="grid gap-4">
+    <div className="space-y-3">
+      <h2 className="text-xl font-bold">Your Saved Restaurants</h2>
+      <div className="grid gap-3">
         {restaurants.map((restaurant) => (
           <Card key={restaurant.id} className="overflow-hidden hover:shadow-float transition-shadow">
-            <div className="flex gap-4 p-4">
+            <div className="flex gap-3 p-3">
               <img
                 src={restaurant.image}
                 alt={restaurant.name}
-                className="w-24 h-24 rounded-lg object-cover"
+                className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                loading="lazy"
+                onError={(e) => {
+                  e.currentTarget.src = 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&h=600&fit=crop';
+                }}
               />
               
-              <div className="flex-1 space-y-2">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-semibold text-lg">{restaurant.name}</h3>
-                    <p className="text-sm text-muted-foreground">{restaurant.cuisine}</p>
+              <div className="flex-1 min-w-0 space-y-1.5">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-base leading-tight truncate">{restaurant.name}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">{restaurant.cuisine}</p>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => onRemove(restaurant.id)}
-                    className="text-destructive hover:text-destructive"
+                    className="text-destructive hover:text-destructive h-8 w-8 flex-shrink-0"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </Button>
                 </div>
 
-                <div className="flex items-center gap-3 text-sm">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 fill-secondary text-secondary" />
+                <div className="flex items-center gap-2.5 text-xs">
+                  <div className="flex items-center gap-0.5">
+                    <Star className="w-3 h-3 fill-secondary text-secondary" />
                     <span>{restaurant.rating}</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <MapPin className="w-4 h-4" />
+                  <div className="flex items-center gap-0.5">
+                    <MapPin className="w-3 h-3" />
                     <span>{restaurant.distance} mi</span>
                   </div>
                   <div className="flex items-center">
-                    <DollarSign className="w-4 h-4" />
+                    <DollarSign className="w-3 h-3" />
                     <span>{restaurant.priceRange}</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <div className="flex flex-wrap gap-1 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-wrap gap-1 flex-1 min-w-0">
                     {restaurant.tags.slice(0, 3).map((tag) => (
-                      <Badge key={tag} variant="secondary" className="text-xs">
+                      <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0.5 h-auto leading-tight">
                         {tag}
                       </Badge>
                     ))}
@@ -85,8 +89,9 @@ export const BookmarkedRestaurants = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => setSelectedRestaurant(restaurant)}
+                    className="h-7 px-2 text-xs flex-shrink-0"
                   >
-                    <MessageSquare className="w-4 h-4 mr-1" />
+                    <MessageSquare className="w-3 h-3 mr-1" />
                     Review
                   </Button>
                 </div>

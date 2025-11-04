@@ -96,72 +96,80 @@ const Admin = () => {
   return (
     <div className="min-h-screen bg-gradient-warm">
       <header className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-40">
-        <div className="container max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="container max-w-4xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate("/")}
+                className="flex-shrink-0"
               >
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
-              <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold truncate">Admin Dashboard</h1>
             </div>
             <Button
               variant="gradient"
               onClick={() => setShowForm(!showForm)}
+              size="sm"
+              className="text-xs sm:text-sm flex-shrink-0"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Restaurant
+              <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Add Restaurant</span>
+              <span className="sm:hidden">Add</span>
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="container max-w-4xl mx-auto px-4 py-8 space-y-6">
+      <main className="container max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-4 sm:space-y-6">
         {showForm && (
-          <Card className="p-6 space-y-4">
-            <h2 className="text-xl font-semibold">Add New Restaurant</h2>
+          <Card className="p-4 sm:p-5 md:p-6 space-y-3 sm:space-y-4">
+            <h2 className="text-lg sm:text-xl font-semibold">Add New Restaurant</h2>
             
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="name">Restaurant Name *</Label>
+            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="name" className="text-sm">Restaurant Name *</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Joe's Pizza"
+                  className="h-10 sm:h-11 text-sm sm:text-base"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="cuisine">Cuisine Type *</Label>
+                <Label htmlFor="cuisine" className="text-sm">Cuisine Type *</Label>
                 <Input
                   id="cuisine"
                   value={formData.cuisine}
                   onChange={(e) => setFormData({ ...formData, cuisine: e.target.value })}
                   placeholder="Italian"
+                  className="h-10 sm:h-11 text-sm sm:text-base"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="address">Address *</Label>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="address" className="text-sm">Address *</Label>
                 <Input
                   id="address"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   placeholder="123 Main St, City"
+                  className="h-10 sm:h-11 text-sm sm:text-base"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="image">Image URL</Label>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="image" className="text-sm">Image URL</Label>
                 <Input
                   id="image"
                   value={formData.image}
                   onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                   placeholder="https://..."
+                  className="h-10 sm:h-11 text-sm sm:text-base"
                 />
               </div>
 

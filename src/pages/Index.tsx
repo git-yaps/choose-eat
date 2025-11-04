@@ -47,12 +47,53 @@ const Index = () => {
   const [bookmarked, setBookmarked] = useState<Restaurant[]>([]);
   const [filteredRestaurants, setFilteredRestaurants] = useState(mockRestaurants);
   const [searchQuery, setSearchQuery] = useState("");
+  const [locationName, setLocationName] = useState<string>("");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const MAPBOX_TOKEN = "pk.eyJ1IjoieWFwc3BhY2UiLCJhIjoiY205bzJvNTNoMG9qZDJqcHhxcHhwa3N2dyJ9.DXTcJDikewJBcYjsUPZc7Q";
 
   useEffect(() => {
     loadUserPreferences();
   }, []);
+
+  useEffect(() => {
+    // Fetch location name if location is a zip code
+    const fetchLocationName = async () => {
+      if (!preferences?.location) return;
+      
+      // Check if location is a zip code (numeric)
+      const isZipCode = /^\d+$/.test(preferences.location.trim());
+      
+      if (isZipCode) {
+        try {
+          const response = await fetch(
+            `https://api.mapbox.com/geocoding/v5/mapbox.places/${preferences.location}.json?access_token=${MAPBOX_TOKEN}&country=PH&types=postcode`
+          );
+          const data = await response.json();
+          
+          if (data.features && data.features.length > 0) {
+            const place = data.features[0];
+            const placeName = place.place_name || place.text || "";
+            // Extract city/area name from place_name (format: "Postcode, City, Region, Country")
+            const parts = placeName.split(",");
+            if (parts.length > 1) {
+              setLocationName(parts[1].trim());
+            } else {
+              setLocationName(placeName);
+            }
+          }
+        } catch (error) {
+          console.error("Geocoding error:", error);
+          setLocationName("");
+        }
+      } else {
+        // If it's already a city name, use it as is
+        setLocationName(preferences.location);
+      }
+    };
+
+    fetchLocationName();
+  }, [preferences?.location]);
 
   const loadUserPreferences = async () => {
     try {
@@ -69,10 +110,32 @@ const Index = () => {
         .eq("user_id", session.user.id)
         .single();
 
-      if (error) throw error;
+      // Check if profile doesn't exist (common error codes for not found)
+      if (error) {
+        // If profile not found, allow browsing with empty preferences
+        if (error.code === "PGRST116" || error.message?.includes("No rows") || error.message?.includes("not found")) {
+          setPreferences({
+            name: "User",
+            location: "",
+            tags: [],
+          });
+          setFoodPreferences({
+            taste_profile: [],
+            dietary_preferences: [],
+            meal_categories: [],
+            dining_occasions: [],
+            budget_min: null,
+            budget_max: null,
+          });
+          setLoading(false);
+          return;
+        }
+        // For other errors, throw to be caught by catch block
+        throw error;
+      }
 
       if (profile) {
-        // Load preferences from database
+        // Load preferences from database (allow browsing even without complete preferences)
         const userPreferences: UserPreferences = {
           name: profile.name || "",
           location: profile.city_or_zip_code || "",
@@ -80,7 +143,7 @@ const Index = () => {
         };
         setPreferences(userPreferences);
         
-        // Load all food preferences
+        // Load all food preferences (may be empty arrays if not set)
         setFoodPreferences({
           taste_profile: profile.taste_profile || [],
           dietary_preferences: profile.dietary_preferences || [],
@@ -95,17 +158,43 @@ const Index = () => {
           setAvatar(profile.avatar);
         }
       } else {
-        // If no profile exists, redirect to preferences
-        navigate("/preferences");
+        // If no profile exists, create a basic one to allow browsing
+        // Don't redirect to preferences - allow user to browse
+        setPreferences({
+          name: "User",
+          location: "",
+          tags: [],
+        });
+        setFoodPreferences({
+          taste_profile: [],
+          dietary_preferences: [],
+          meal_categories: [],
+          dining_occasions: [],
+          budget_min: null,
+          budget_max: null,
+        });
       }
     } catch (error: any) {
       console.error("Error loading preferences:", error);
       toast({
         title: "Error",
-        description: "Failed to load user preferences. Please try again.",
+        description: error.message || "Failed to load user preferences. Please try again.",
         variant: "destructive",
       });
-      navigate("/auth");
+      // Allow browsing even if there's an error loading preferences
+      setPreferences({
+        name: "User",
+        location: "",
+        tags: [],
+      });
+      setFoodPreferences({
+        taste_profile: [],
+        dietary_preferences: [],
+        meal_categories: [],
+        dining_occasions: [],
+        budget_min: null,
+        budget_max: null,
+      });
     } finally {
       setLoading(false);
     }
@@ -178,7 +267,7 @@ const Index = () => {
         description: "You've been successfully logged out.",
       });
       
-      navigate("/auth");
+      navigate("/");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -201,13 +290,13 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-warm pb-24">
+    <div className="min-h-screen bg-gradient-warm pb-20">
       {/* Header */}
       <header className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-40 shadow-sm">
-        <div className="container max-w-2xl mx-auto px-4 py-4">
+        <div className="container max-w-2xl mx-auto px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            <img src={logo} alt="Choose Eat" className="h-12 w-auto" />
-            <div className="flex items-center gap-3">
+            <img src={logo} alt="Choose Eat" className="h-10 sm:h-12 w-auto" />
+            <div className="flex items-center gap-2 sm:gap-3">
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="text-lg bg-gradient-primary">
                   {avatar}
@@ -222,24 +311,9 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container max-w-2xl mx-auto px-4 py-8 space-y-6">
+      <main className="container max-w-2xl mx-auto px-3 sm:px-4 pt-3 sm:pt-4 pb-20 sm:pb-8 space-y-3 sm:space-y-4">
         {activeTab === "discover" && (
           <>
-            <div
-              className="relative h-32 rounded-2xl overflow-hidden shadow-card"
-              style={{
-                backgroundImage: `url(${heroImage})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            >
-              <div className="absolute inset-0 bg-gradient-card flex items-center justify-center">
-                <p className="text-white text-xl font-semibold text-center px-4">
-                  Swipe to find your next favorite spot
-                </p>
-              </div>
-            </div>
-
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
@@ -271,48 +345,68 @@ const Index = () => {
         )}
 
         {activeTab === "profile" && (
-          <div className="space-y-6">
-            <div className="bg-card rounded-2xl p-8 shadow-card space-y-4">
-              <h2 className="text-2xl font-bold">Your Profile</h2>
+          <div className="space-y-4">
+            <div className="bg-card rounded-2xl p-6 shadow-card space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold">Your Profile</h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("/preferences")}
+                  className="text-xs h-7 px-3"
+                >
+                  Edit Profile
+                </Button>
+              </div>
               
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <div className="flex items-center gap-4">
-                  <Avatar className="h-20 w-20">
-                    <AvatarFallback className="text-3xl bg-gradient-primary">
-                      {avatar}
-                    </AvatarFallback>
-                  </Avatar>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsAvatarDialogOpen(true)}
-                    className="flex items-center gap-2"
-                  >
-                    <Camera className="w-4 h-4" />
-                    Change Avatar
-                  </Button>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Name</label>
-                  <p className="text-lg">{preferences.name}</p>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Location</label>
-                  <p className="text-lg">{preferences.location}</p>
+                  <div className="relative">
+                    <Avatar className="h-12 w-12">
+                      <AvatarFallback className="text-xl bg-gradient-primary">
+                        {avatar}
+                      </AvatarFallback>
+                    </Avatar>
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      onClick={() => setIsAvatarDialogOpen(true)}
+                      className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full p-0 shadow-md"
+                    >
+                      <Camera className="w-3 h-3" />
+                    </Button>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <label className="text-[10px] font-medium text-muted-foreground">Name</label>
+                        <p className="text-sm truncate">{preferences.name}</p>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <label className="text-[10px] font-medium text-muted-foreground">Location</label>
+                        <p className="text-sm truncate">
+                          {locationName || preferences.location}
+                        </p>
+                        {locationName && locationName !== preferences.location && (
+                          <p className="text-[10px] text-muted-foreground truncate">
+                            {preferences.location}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {foodPreferences && (
                   <>
                     {foodPreferences.taste_profile && foodPreferences.taste_profile.length > 0 && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Taste Profile</label>
-                        <div className="flex flex-wrap gap-2 mt-2">
+                        <label className="text-xs font-medium text-muted-foreground">Taste Profile</label>
+                        <div className="flex flex-wrap gap-1.5 mt-1.5">
                           {foodPreferences.taste_profile.map((taste) => (
                             <div
                               key={taste}
-                              className="px-3 py-1.5 bg-gradient-primary text-primary-foreground rounded-full text-sm font-medium"
+                              className="px-2 py-1 bg-gradient-primary text-primary-foreground rounded-full text-xs font-medium"
                             >
                               {taste}
                             </div>
@@ -323,12 +417,12 @@ const Index = () => {
 
                     {foodPreferences.dietary_preferences && foodPreferences.dietary_preferences.length > 0 && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Dietary Preferences</label>
-                        <div className="flex flex-wrap gap-2 mt-2">
+                        <label className="text-xs font-medium text-muted-foreground">Dietary Preferences</label>
+                        <div className="flex flex-wrap gap-1.5 mt-1.5">
                           {foodPreferences.dietary_preferences.map((pref) => (
                             <div
                               key={pref}
-                              className="px-3 py-1.5 bg-gradient-primary text-primary-foreground rounded-full text-sm font-medium"
+                              className="px-2 py-1 bg-gradient-primary text-primary-foreground rounded-full text-xs font-medium"
                             >
                               {pref}
                             </div>
@@ -339,12 +433,12 @@ const Index = () => {
 
                     {foodPreferences.meal_categories && foodPreferences.meal_categories.length > 0 && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Meal Categories</label>
-                        <div className="flex flex-wrap gap-2 mt-2">
+                        <label className="text-xs font-medium text-muted-foreground">Meal Categories</label>
+                        <div className="flex flex-wrap gap-1.5 mt-1.5">
                           {foodPreferences.meal_categories.map((meal) => (
                             <div
                               key={meal}
-                              className="px-3 py-1.5 bg-gradient-primary text-primary-foreground rounded-full text-sm font-medium"
+                              className="px-2 py-1 bg-gradient-primary text-primary-foreground rounded-full text-xs font-medium"
                             >
                               {meal}
                             </div>
@@ -355,12 +449,12 @@ const Index = () => {
 
                     {foodPreferences.dining_occasions && foodPreferences.dining_occasions.length > 0 && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Dining Occasions</label>
-                        <div className="flex flex-wrap gap-2 mt-2">
+                        <label className="text-xs font-medium text-muted-foreground">Dining Occasions</label>
+                        <div className="flex flex-wrap gap-1.5 mt-1.5">
                           {foodPreferences.dining_occasions.map((occasion) => (
                             <div
                               key={occasion}
-                              className="px-3 py-1.5 bg-gradient-primary text-primary-foreground rounded-full text-sm font-medium"
+                              className="px-2 py-1 bg-gradient-primary text-primary-foreground rounded-full text-xs font-medium"
                             >
                               {occasion}
                             </div>
@@ -371,8 +465,8 @@ const Index = () => {
 
                     {foodPreferences.budget_min !== null && foodPreferences.budget_max !== null && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Budget Range</label>
-                        <p className="text-lg mt-1">
+                        <label className="text-xs font-medium text-muted-foreground">Budget Range</label>
+                        <p className="text-base mt-1">
                           ₱{foodPreferences.budget_min} - ₱{foodPreferences.budget_max}
                         </p>
                       </div>
@@ -380,40 +474,10 @@ const Index = () => {
                   </>
                 )}
 
-                <div className="pt-4 border-t">
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => navigate("/preferences")}
-                  >
-                    Edit Preferences
-                  </Button>
-                </div>
-
-                <div className="pt-4 border-t">
-                  <div className="grid grid-cols-2 gap-4 text-center">
-                    <div>
-                      <p className="text-3xl font-bold text-primary">{bookmarked.length}</p>
-                      <p className="text-sm text-muted-foreground">Saved Restaurants</p>
-                    </div>
-                    <div>
-                      <p className="text-3xl font-bold text-primary">{filteredRestaurants.length}</p>
-                      <p className="text-sm text-muted-foreground">Restaurants to Explore</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t space-y-3">
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => window.location.href = '/admin'}
-                  >
-                    Admin Dashboard
-                  </Button>
+                <div className="pt-3 border-t">
                   <Button
                     variant="destructive"
-                    className="w-full"
+                    className="w-full text-sm"
                     onClick={handleLogout}
                   >
                     Logout
@@ -426,7 +490,18 @@ const Index = () => {
       </main>
 
       {/* Navigation */}
-      <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
+      <Navigation 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
+        onRestaurantAdded={() => {
+          // Reload restaurants when a new one is added
+          // In a real app, you'd fetch from the database here
+          toast({
+            title: "Success",
+            description: "Restaurant list will be updated shortly.",
+          });
+        }}
+      />
 
       {/* Avatar Picker Dialog */}
       <Dialog open={isAvatarDialogOpen} onOpenChange={setIsAvatarDialogOpen}>
@@ -437,12 +512,12 @@ const Index = () => {
               Select an avatar for your profile picture
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-8 gap-3 py-4 max-h-[400px] overflow-y-auto">
+          <div className="grid grid-cols-6 gap-4 py-4 max-h-[400px] overflow-y-auto">
             {AVATAR_OPTIONS.map((emoji) => (
               <button
                 key={emoji}
                 onClick={() => handleAvatarChange(emoji)}
-                className={`text-3xl p-3 rounded-lg transition-all hover:scale-110 hover:bg-accent ${
+                className={`text-4xl p-4 aspect-square rounded-lg transition-all hover:scale-110 hover:bg-accent flex items-center justify-center ${
                   avatar === emoji ? "ring-2 ring-primary bg-accent" : ""
                 }`}
               >
