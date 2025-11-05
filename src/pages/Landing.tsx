@@ -47,14 +47,6 @@ const Landing = () => {
               <Button onClick={handleGetStarted} size="lg" variant="gradient" className="text-sm sm:text-base">
                 Start Swiping
               </Button>
-              <Button 
-                onClick={() => window.location.href = "/documentation"} 
-                size="lg" 
-                variant="outline" 
-                className="text-sm sm:text-base"
-              >
-                Documentation
-              </Button>
             </div>
           </div>
           <div className="relative mt-8 md:mt-0">
