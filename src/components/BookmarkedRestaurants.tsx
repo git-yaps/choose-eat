@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { Restaurant } from "@/types";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, DollarSign, Trash2, MessageSquare } from "lucide-react";
+import { Star, MapPin, DollarSign, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { RestaurantCard } from "@/components/RestaurantCard";
 import { ReviewsDialog } from "@/components/ReviewsDialog";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 
 interface BookmarkedRestaurantsProps {
   restaurants: Restaurant[];
@@ -16,6 +20,12 @@ export const BookmarkedRestaurants = ({
   onRemove,
 }: BookmarkedRestaurantsProps) => {
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
+  const [showReviews, setShowReviews] = useState(false);
+
+  const handleGetDirections = (restaurant: Restaurant) => {
+    const query = encodeURIComponent(restaurant.address);
+    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+  };
 
   if (restaurants.length === 0) {
     return (
@@ -34,7 +44,11 @@ export const BookmarkedRestaurants = ({
       <h2 className="text-xl font-bold">Your Saved Restaurants</h2>
       <div className="grid gap-3">
         {restaurants.map((restaurant) => (
-          <Card key={restaurant.id} className="overflow-hidden hover:shadow-float transition-shadow">
+          <Card 
+            key={restaurant.id} 
+            className="overflow-hidden hover:shadow-float transition-shadow cursor-pointer"
+            onClick={() => setSelectedRestaurant(restaurant)}
+          >
             <div className="flex gap-3 p-3">
               <img
                 src={restaurant.image}
@@ -55,7 +69,10 @@ export const BookmarkedRestaurants = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => onRemove(restaurant.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemove(restaurant.id);
+                    }}
                     className="text-destructive hover:text-destructive h-8 w-8 flex-shrink-0"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -76,25 +93,6 @@ export const BookmarkedRestaurants = ({
                     <span>{restaurant.priceRange}</span>
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex flex-wrap gap-1 flex-1 min-w-0">
-                    {restaurant.tags.slice(0, 3).map((tag) => (
-                      <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0.5 h-auto leading-tight">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedRestaurant(restaurant)}
-                    className="h-7 px-2 text-xs flex-shrink-0"
-                  >
-                    <MessageSquare className="w-3 h-3 mr-1" />
-                    Review
-                  </Button>
-                </div>
               </div>
             </div>
           </Card>
@@ -102,11 +100,49 @@ export const BookmarkedRestaurants = ({
       </div>
 
       {selectedRestaurant && (
-        <ReviewsDialog
-          restaurant={selectedRestaurant}
-          open={!!selectedRestaurant}
-          onOpenChange={(open) => !open && setSelectedRestaurant(null)}
-        />
+        <>
+          <Dialog open={!!selectedRestaurant} onOpenChange={(open) => !open && setSelectedRestaurant(null)}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-2 sm:p-4 md:p-6 w-[calc(100%-0.5rem)] sm:w-[calc(100%-2rem)] md:w-full max-w-[98vw] sm:max-w-2xl mx-auto">
+              <div className="relative w-full flex justify-center items-center">
+                <div className="w-full max-w-full">
+                  <RestaurantCard
+                    restaurant={selectedRestaurant}
+                    variant="dialog"
+                    onGetDirections={() => handleGetDirections(selectedRestaurant)}
+                    onSeeReviews={() => {
+                      setShowReviews(true);
+                      setSelectedRestaurant(null);
+                    }}
+                  />
+                </div>
+              </div>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  onRemove(selectedRestaurant.id);
+                  setSelectedRestaurant(null);
+                }}
+                className="w-full text-xs sm:text-sm min-h-[44px] touch-manipulation mt-4"
+              >
+                Remove from Bookmarks
+              </Button>
+            </DialogContent>
+          </Dialog>
+
+          {showReviews && (
+            <ReviewsDialog
+              restaurant={selectedRestaurant}
+              open={showReviews}
+              onOpenChange={(open) => {
+                setShowReviews(open);
+                if (!open) {
+                  setSelectedRestaurant(null);
+                }
+              }}
+            />
+          )}
+        </>
       )}
     </div>
   );

@@ -2,28 +2,11 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronRight, Loader2, Camera } from "lucide-react";
+import { ChevronRight, Loader2 } from "lucide-react";
 import logo from "@/assets/logo.png";
-
-const AVATAR_OPTIONS = [
-  "😊", "😎", "🤩", "🥳", "😄", "😃", "😁", "🤗",
-  "🤓", "🧐", "😇", "🤠", "🥰", "😍", "😋", "🤤",
-  "😏", "😌", "😊", "🙂", "😉", "😗", "😙", "😚",
-  "🤔", "🤨", "🧑", "👨", "👩", "👴", "👵", "👶",
-  "🧑‍🍳", "👨‍🍳", "👩‍🍳", "🧑‍💼", "👨‍💼", "👩‍💼", "🧑‍🎨", "👨‍🎨"
-];
 
 const tasteProfiles = [
   "Sweet", "Savory", "Spicy", "Sour", "Umami", "Bitter", "Smoky", "Tangy"
@@ -47,10 +30,6 @@ const diningOccasions = [
 const Preferences = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [name, setName] = useState("");
-  const [location, setLocation] = useState("");
-  const [avatar, setAvatar] = useState<string>("😊");
-  const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
   const [selectedTastes, setSelectedTastes] = useState<string[]>([]);
   const [selectedDietary, setSelectedDietary] = useState<string[]>([]);
   const [selectedMeals, setSelectedMeals] = useState<string[]>([]);
@@ -72,23 +51,19 @@ const Preferences = () => {
     }
 
     // Load existing preferences if they exist
-    const { data: profile } = await (supabase as any)
+    const { data: profile, error: profileError } = await (supabase as any)
       .from("profiles")
       .select("*")
       .eq("user_id", session.user.id)
       .single();
 
+    // If profile doesn't exist, that's okay - user can create it when they save
+    if (profileError && profileError.code !== "PGRST116" && !profileError.message?.includes("No rows")) {
+      console.error("Error loading profile:", profileError);
+      // Still continue - allow user to set preferences
+    }
+
     if (profile) {
-      // Load existing profile info
-      if (profile.name) {
-        setName(profile.name);
-      }
-      if (profile.city_or_zip_code) {
-        setLocation(profile.city_or_zip_code);
-      }
-      if (profile.avatar) {
-        setAvatar(profile.avatar);
-      }
       // Load existing preferences into the form
       if (profile.taste_profile) {
         setSelectedTastes(profile.taste_profile);
@@ -119,15 +94,6 @@ const Preferences = () => {
   };
 
   const handleSave = async () => {
-    if (!name.trim() || !location.trim()) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in your name and location.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (
       selectedTastes.length === 0 &&
       selectedDietary.length === 0 &&
@@ -148,20 +114,47 @@ const Preferences = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("No session found");
 
+      // Get existing profile to preserve name, location, avatar if they exist
+      const { data: existingProfile } = await (supabase as any)
+        .from("profiles")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .single();
+
+      const profileData: any = {
+        user_id: session.user.id,
+        taste_profile: selectedTastes,
+        dietary_preferences: selectedDietary,
+        meal_categories: selectedMeals,
+        dining_occasions: selectedOccasions,
+        budget_min: budgetRange[0],
+        budget_max: budgetRange[1],
+      };
+
+      // Preserve name and location if they exist in the existing profile
+      if (existingProfile) {
+        if (existingProfile.name) profileData.name = existingProfile.name;
+        if (existingProfile.city_or_zip_code) profileData.city_or_zip_code = existingProfile.city_or_zip_code;
+      } else {
+        // If profile doesn't exist, try to get name/location from auth metadata (set during signup)
+        const userMetadata = session.user.user_metadata;
+        if (userMetadata) {
+          if (userMetadata.name) profileData.name = userMetadata.name;
+          if (userMetadata.city_or_zip_code) profileData.city_or_zip_code = userMetadata.city_or_zip_code;
+        }
+        // If still no name, use a default (shouldn't happen if signup flow is correct)
+        if (!profileData.name) {
+          profileData.name = "User";
+        }
+        if (!profileData.city_or_zip_code) {
+          profileData.city_or_zip_code = "";
+        }
+      }
+
+      // Use upsert to handle both create and update cases
       const { error } = await (supabase as any)
         .from("profiles")
-        .update({
-          name: name.trim(),
-          city_or_zip_code: location.trim(),
-          avatar: avatar,
-          taste_profile: selectedTastes,
-          dietary_preferences: selectedDietary,
-          meal_categories: selectedMeals,
-          dining_occasions: selectedOccasions,
-          budget_min: budgetRange[0],
-          budget_max: budgetRange[1],
-        })
-        .eq("user_id", session.user.id);
+        .upsert(profileData, { onConflict: "user_id" });
 
       if (error) throw error;
 
@@ -195,59 +188,7 @@ const Preferences = () => {
       <div className="max-w-3xl mx-auto space-y-6 sm:space-y-8 animate-scale-in">
         <div className="text-center space-y-3 sm:space-y-4">
           <img src={logo} alt="Choose Eat" className="h-16 sm:h-20 w-auto mx-auto" />
-          <h1 className="text-2xl sm:text-3xl font-bold">Edit Your Profile</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Update your information and food preferences
-          </p>
-        </div>
-
-        {/* Profile Information */}
-        <div className="bg-card rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 shadow-card space-y-3 sm:space-y-4">
-          <h2 className="text-lg sm:text-xl font-bold mb-2">Profile Information</h2>
-          
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-            <div className="relative flex-shrink-0">
-              <Avatar className="h-14 w-14 sm:h-16 sm:w-16">
-                <AvatarFallback className="text-xl sm:text-2xl bg-gradient-primary">
-                  {avatar}
-                </AvatarFallback>
-              </Avatar>
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={() => setIsAvatarDialogOpen(true)}
-                className="absolute -bottom-1 -right-1 h-6 w-6 sm:h-7 sm:w-7 rounded-full p-0 shadow-md"
-              >
-                <Camera className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              </Button>
-            </div>
-            <div className="flex-1 w-full space-y-3 sm:space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Name</label>
-                <Input
-                  type="text"
-                  placeholder="Enter your name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="h-11 sm:h-12 text-sm sm:text-base"
-                  required
-                  maxLength={100}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Location</label>
-                <Input
-                  type="text"
-                  placeholder="Enter your city or zip code"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="h-11 sm:h-12 text-sm sm:text-base"
-                  required
-                  maxLength={100}
-                />
-              </div>
-            </div>
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-black">Your Preferences</h1>
         </div>
 
         {/* Taste Profile */}
@@ -394,34 +335,6 @@ const Preferences = () => {
         </div>
       </div>
 
-      {/* Avatar Picker Dialog */}
-      <Dialog open={isAvatarDialogOpen} onOpenChange={setIsAvatarDialogOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl">Choose Your Avatar</DialogTitle>
-            <DialogDescription className="text-xs sm:text-sm">
-              Select an avatar for your profile picture
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-6 sm:grid-cols-6 gap-3 sm:gap-4 py-4 max-h-[50vh] sm:max-h-[400px] overflow-y-auto">
-            {AVATAR_OPTIONS.map((emoji) => (
-              <button
-                key={emoji}
-                type="button"
-                onClick={() => {
-                  setAvatar(emoji);
-                  setIsAvatarDialogOpen(false);
-                }}
-                className={`text-2xl sm:text-3xl md:text-4xl p-2 sm:p-3 md:p-4 aspect-square rounded-lg transition-all hover:scale-110 hover:bg-accent flex items-center justify-center ${
-                  avatar === emoji ? "ring-2 ring-primary bg-accent" : ""
-                }`}
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

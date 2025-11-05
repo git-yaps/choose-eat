@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Restaurant } from "@/types";
 import { RestaurantCard } from "./RestaurantCard";
+import { ReviewsDialog } from "./ReviewsDialog";
 import { Info, Heart, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -14,9 +15,19 @@ export const SwipeInterface = ({ restaurants, onSwipe }: SwipeInterfaceProps) =>
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const currentRestaurant = restaurants[currentIndex];
+
+  const handleGetDirections = (restaurant: Restaurant) => {
+    const query = encodeURIComponent(restaurant.address);
+    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+  };
+
+  const handleSeeReviews = (restaurant: Restaurant) => {
+    setSelectedRestaurant(restaurant);
+  };
 
   const handleSwipe = (direction: "left" | "right") => {
     if (!currentRestaurant) return;
@@ -83,9 +94,9 @@ export const SwipeInterface = ({ restaurants, onSwipe }: SwipeInterfaceProps) =>
   const opacity = 1 - Math.abs(dragOffset.x) / 300;
 
   return (
-    <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto pb-0 px-4 sm:px-0">
+    <div className="relative w-full pb-0 z-0">
       <div
-        className="relative h-[500px] sm:h-[550px] md:h-[600px] touch-none"
+        className="relative h-[500px] sm:h-[550px] md:h-[600px] touch-none z-0"
         onPointerMove={handlePointerMove}
         onPointerDown={handlePointerDown}
         ref={cardRef}
@@ -99,6 +110,8 @@ export const SwipeInterface = ({ restaurants, onSwipe }: SwipeInterfaceProps) =>
           }}
           onSwipeLeft={() => handleSwipe("left")}
           onSwipeRight={() => handleSwipe("right")}
+          onGetDirections={() => handleGetDirections(currentRestaurant)}
+          onSeeReviews={() => handleSeeReviews(currentRestaurant)}
         />
 
         {dragOffset.x > 50 && (
@@ -112,6 +125,14 @@ export const SwipeInterface = ({ restaurants, onSwipe }: SwipeInterfaceProps) =>
           </div>
         )}
       </div>
+
+      {selectedRestaurant && (
+        <ReviewsDialog
+          restaurant={selectedRestaurant}
+          open={!!selectedRestaurant}
+          onOpenChange={(open) => !open && setSelectedRestaurant(null)}
+        />
+      )}
     </div>
   );
 };

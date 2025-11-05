@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/logo.png";
 import poster from "@/assets/poster.png";
+import chooseEatBanner from "@/assets/choose-eat-banner.png";
 import { Loader2, MapPin, Navigation, Eye, EyeOff, Camera } from "lucide-react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -72,10 +73,20 @@ const Auth = () => {
   }, [navigate]);
 
   const reverseGeocode = async (lng: number, lat: number) => {
+    if (!MAPBOX_TOKEN) {
+      console.warn('Mapbox token not available');
+      return;
+    }
+    
     try {
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}`
       );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       
       if (data.features && data.features.length > 0) {
@@ -89,6 +100,7 @@ const Auth = () => {
       }
     } catch (error) {
       console.error('Reverse geocoding error:', error);
+      // Silently fail - don't disrupt user experience
     }
   };
 
@@ -258,24 +270,42 @@ const Auth = () => {
       if (error) throw error;
 
       if (data.user) {
-        // Create profile with basic info
-        const { error: profileError } = await (supabase as any)
+        // Create profile with basic info using upsert to handle race conditions
+        const profileData = {
+          user_id: data.user.id,
+          name: name.trim(),
+          city_or_zip_code: cityOrZipCode.trim(),
+        };
+        
+        console.log("Creating profile with data:", profileData);
+        console.log("User ID:", data.user.id);
+        
+        // Use upsert instead of insert to handle case where profile might already exist
+        const { data: insertedProfile, error: profileError } = await (supabase as any)
           .from("profiles")
-          .insert({
-            user_id: data.user.id,
-            name: name.trim(),
-            city_or_zip_code: cityOrZipCode.trim(),
-            avatar: avatar,
-          });
+          .upsert(profileData, { onConflict: "user_id" })
+          .select()
+          .single();
+
+        // Store avatar in localStorage since it's not in database
+        localStorage.setItem(`avatar_${data.user.id}`, avatar);
 
         if (profileError) {
           console.error("Profile creation error:", profileError);
+          console.error("Error details:", JSON.stringify(profileError, null, 2));
+          // Even if profile creation fails, continue to preferences page
+          // The preferences page will handle creating the profile when saved
+          toast({
+            title: "Account created!",
+            description: "Welcome to Choose Eat. Let's set up your preferences.",
+          });
+        } else {
+          console.log("Profile created successfully:", insertedProfile);
+          toast({
+            title: "Account created!",
+            description: "Welcome to Choose Eat. Let's set up your preferences.",
+          });
         }
-
-        toast({
-          title: "Account created!",
-          description: "Welcome to Choose Eat. Let's set up your preferences.",
-        });
 
         // Redirect to preferences setup
         navigate("/preferences");
@@ -293,18 +323,25 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-gradient-warm flex items-center justify-center p-4 sm:p-6">
-      <div className="w-full max-w-6xl mx-auto grid md:grid-cols-2 gap-6 md:gap-8 items-center animate-scale-in">
-        {/* Poster on the left */}
-        <div className="hidden md:flex items-center justify-center">
+      <div className="w-full max-w-6xl mx-auto flex flex-col md:grid md:grid-cols-2 gap-6 md:gap-8 items-center animate-scale-in">
+        {/* Banner/Poster - above form on mobile, on left on desktop */}
+        <div className="w-full md:flex items-center justify-center order-1 md:order-1">
+          {/* Show choose-eat-banner on small screens */}
+          <img 
+            src={chooseEatBanner} 
+            alt="Choose Eat" 
+            className="w-full h-auto max-h-[300px] sm:max-h-[400px] md:hidden object-contain rounded-2xl"
+          />
+          {/* Show poster on medium and larger screens */}
           <img 
             src={poster} 
             alt="Choose Eat" 
-            className="w-full h-auto max-h-[600px] object-contain rounded-2xl"
+            className="hidden md:block w-full h-auto max-h-[600px] object-contain rounded-2xl"
           />
         </div>
 
-        {/* Form on the right */}
-        <div className="w-full">
+        {/* Form - below poster on mobile, on right on desktop */}
+        <div className="w-full order-2 md:order-2">
           <div className="bg-card rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8 shadow-card space-y-4 sm:space-y-5 md:space-y-6">
             <div className="text-center space-y-2">
               <img src={logo} alt="Choose Eat" className="h-16 sm:h-20 md:h-24 w-auto mx-auto" />

@@ -43,9 +43,17 @@ const Landing = () => {
               Stop scrolling endlessly. Swipe through personalized food
               recommendations and discover amazing restaurants near you.
             </p>
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <Button onClick={handleGetStarted} size="lg" variant="gradient" className="text-sm sm:text-base">
                 Start Swiping
+              </Button>
+              <Button 
+                onClick={() => window.location.href = "/documentation"} 
+                size="lg" 
+                variant="outline" 
+                className="text-sm sm:text-base"
+              >
+                Documentation
               </Button>
             </div>
           </div>

@@ -66,28 +66,28 @@ export const ReviewsDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto p-3 sm:p-4 md:p-6 w-[calc(100%-0.5rem)] sm:w-[calc(100%-2rem)] md:w-full max-w-[98vw] sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl">{restaurant.name}</DialogTitle>
-          <DialogDescription>{restaurant.cuisine} • {restaurant.address}</DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl md:text-2xl">{restaurant.name}</DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm">{restaurant.cuisine} • {restaurant.address}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-5 md:space-y-6">
           {/* Add Review Section */}
-          <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
-            <h3 className="font-semibold">Leave a Review</h3>
+          <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 bg-muted/50 rounded-lg">
+            <h3 className="text-sm sm:text-base font-semibold">Leave a Review</h3>
             
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Your Rating:</span>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+              <span className="text-xs sm:text-sm text-muted-foreground">Your Rating:</span>
               <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
                     onClick={() => setRating(star)}
-                    className="transition-transform hover:scale-110"
+                    className="transition-transform hover:scale-110 min-h-[44px] min-w-[44px] touch-manipulation flex items-center justify-center"
                   >
                     <Star
-                      className={`w-6 h-6 ${
+                      className={`w-5 h-5 sm:w-6 sm:h-6 ${
                         star <= rating
                           ? "fill-secondary text-secondary"
                           : "text-muted-foreground"
@@ -102,41 +102,45 @@ export const ReviewsDialog = ({
               placeholder="Share your experience (optional)..."
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              className="min-h-[100px]"
+              className="min-h-[80px] sm:min-h-[100px] text-xs sm:text-sm"
             />
 
-            <Button onClick={handleSubmit} variant="gradient" className="w-full">
+            <Button 
+              onClick={handleSubmit} 
+              variant="gradient" 
+              className="w-full text-xs sm:text-sm min-h-[44px] touch-manipulation"
+            >
               Submit Review
             </Button>
           </div>
 
           {/* Reviews List */}
-          <div className="space-y-4">
-            <h3 className="font-semibold">
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-sm sm:text-base font-semibold">
               Reviews {reviews.length > 0 && `(${reviews.length})`}
             </h3>
 
             {reviews.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
+              <p className="text-xs sm:text-sm text-muted-foreground text-center py-6 sm:py-8">
                 No reviews yet. Be the first to review!
               </p>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {reviews.map((review) => (
                   <div
                     key={review.id}
-                    className="p-4 bg-card rounded-lg border border-border space-y-2"
+                    className="p-3 sm:p-4 bg-card rounded-lg border border-border space-y-2"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-medium">{review.userName}</span>
-                      <span className="text-xs text-muted-foreground">{review.date}</span>
+                      <span className="text-xs sm:text-sm font-medium">{review.userName}</span>
+                      <span className="text-[10px] sm:text-xs text-muted-foreground">{review.date}</span>
                     </div>
                     
-                    <div className="flex gap-1">
+                    <div className="flex gap-0.5 sm:gap-1">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
                           key={star}
-                          className={`w-4 h-4 ${
+                          className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${
                             star <= review.rating
                               ? "fill-secondary text-secondary"
                               : "text-muted-foreground"
@@ -146,7 +150,7 @@ export const ReviewsDialog = ({
                     </div>
 
                     {review.comment && (
-                      <p className="text-sm leading-relaxed">{review.comment}</p>
+                      <p className="text-xs sm:text-sm leading-relaxed">{review.comment}</p>
                     )}
                   </div>
                 ))}
